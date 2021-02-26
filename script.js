@@ -1,6 +1,10 @@
+// initial variables
 var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 $('#failedSearchAlert').hide();
+var myCards = [];
 
+
+// initally accessing local storage
 var weatherList = localStorage.getItem('weatherList');
 if(weatherList === null){
     localStorage.setItem('weatherList', '[]');
@@ -9,17 +13,68 @@ if(weatherList === null){
 weatherList = JSON.parse(localStorage.getItem('weatherList'));
 console.log(weatherList);
 
+
+// add new card flow
+$('#searchSubmit').on('click', function(event){
+    event.preventDefault();
+    getWeatherData($('#cityInput').val());
+});
+
+function getWeatherData(cityToSearch){
+    fetch("https://api.openweathermap.org/data/2.5/weather?q="+ cityToSearch+"&appid=891f7c5d1e00dfea698d456d630ff966")
+    .then(function(response){
+        return response.json();
+    }).then(function(data){
+        var test = data.cod;
+        if(test === "404"){
+            console.log('confirmed');
+            $('#failedSearchAlert').show();
+        } else {
+            $('#searchModal').modal('toggle');
+            addCityToWeatherList($('#cityInput').val());
+            // once new city is added it leads into the populate cards flow
+            populateCards();
+        }
+    });
+}
+
 function addCityToWeatherList(cityToAdd){
     if(!weatherList.includes(cityToAdd) && cityToAdd != ''){
         weatherList.push(cityToAdd);
         localStorage.setItem('weatherList', JSON.stringify(weatherList));
         weatherList = JSON.parse(localStorage.getItem('weatherList'));
     }
-    
 }
 
-function createCard(dataInput){
-    // console.log(dataInput);
+
+// populate cards flow
+function populateCards(){
+    var myCardsIndex = -1;
+    myCards = [];
+    weatherList.forEach(element => {
+        myCardsIndex++;
+        myCards.push('');
+        getDataForCards(element, myCardsIndex);
+    });
+}
+
+function getDataForCards(q, indexToPass){
+    fetch("https://api.openweathermap.org/data/2.5/weather?q="+ q +"&appid=891f7c5d1e00dfea698d456d630ff966")
+    .then(function(response){
+        return response.json();
+    }).then(function(data){
+        var test = data.cod;
+        if(test === "404"){
+
+        } else {
+            console.log(indexToPass);
+            createCard(data, indexToPass);
+        }
+    });
+}
+
+function createCard(dataInput, myIndex){
+    var myI = myIndex;
     var newCard = $('#templateCard').clone();
     $(newCard[0]).removeAttr('id');
     newCard.find('.cityText').text(dataInput.name);
@@ -36,66 +91,24 @@ function createCard(dataInput){
         var currentDay = new Date();
         for(var i = 1; i<6; i++){
             currentDay.setTime(data.daily[i].dt * 1000);
-            newCard.find('.day' + i).find('h4').text(days[currentDay.getDay()]);
+            newCard.find('.day' + i).find('h6').text(days[currentDay.getDay()]);
             newCard.find('.day' + i).find('h5').text(Math.round((((data.daily[i].temp.day-273.15)*1.8)+32)) + " \xB0" + "F");
         }
-        
-
-
-        $('.weatherCardContainer').append(newCard);
-    });
-
-    // console.log(newCard);
-    
+        myCards[myI] = newCard;
+        appendCards(myCards);
+    });   
 }
 
-function getOneCallData(lat, lon){
-    fetch('https://api.openweathermap.org/data/2.5/onecall?lat='+lat+'&lon='+lon+'&exclude=hourly,minutely,alerts&appid=891f7c5d1e00dfea698d456d630ff966')
-    .then(function(response){
-        return response.json();
-    }).then(function(data){
-        return data.current.uvi;
-    });
-}
-
-function getWeatherData(cityToSearch){
-    fetch("https://api.openweathermap.org/data/2.5/weather?q="+ cityToSearch+"&appid=891f7c5d1e00dfea698d456d630ff966")
-    .then(function(response){
-        return response.json();
-    }).then(function(data){
-        var test = data.cod;
-        if(test === "404"){
-            console.log('confirmed');
-            $('#failedSearchAlert').show();
-        } else {
-            $('#searchModal').modal('toggle');
-            // getOneCallData(data.coord.lat, data.coord.lon);
-            addCityToWeatherList($('#cityInput').val());
-            createCard(data);
-        }
-    });
-}
-
-$('#searchSubmit').on('click', function(event){
-    event.preventDefault();
-    getWeatherData($('#cityInput').val());
-});
-
-function populateCards(){
-    weatherList.forEach(element => {
-
-    fetch("https://api.openweathermap.org/data/2.5/weather?q="+ element +"&appid=891f7c5d1e00dfea698d456d630ff966")
-    .then(function(response){
-        return response.json();
-    }).then(function(data){
-        var test = data.cod;
-        if(test === "404"){
-
-        } else {
-            createCard(data);
-        }
-    });
+function appendCards(cardsToAppend){
+    console.log(cardsToAppend);
+    $('.weatherCardContainer').empty();
+    cardsToAppend.forEach(element => {
+        $('.weatherCardContainer').append(element);
     });
 }
 
 populateCards();
+
+$(document).ready(function(){
+    $('.weatherCardContainer').sortable();
+});
