@@ -1,3 +1,4 @@
+var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 $('#failedSearchAlert').hide();
 
 var weatherList = localStorage.getItem('weatherList');
@@ -31,11 +32,21 @@ function createCard(dataInput){
     .then(function(response){
         return response.json();
     }).then(function(data){
-        // console.log(data);
+        newCard.find('.UVText').text('UVI: ' + data.current.uvi);
+        var currentDay = new Date();
+        for(var i = 1; i<6; i++){
+            currentDay.setTime(data.daily[i].dt * 1000);
+            newCard.find('.day' + i).find('h4').text(days[currentDay.getDay()]);
+            newCard.find('.day' + i).find('h5').text(Math.round((((data.daily[i].temp.day-273.15)*1.8)+32)) + " \xB0" + "F");
+        }
+        
+
+
+        $('.weatherCardContainer').append(newCard);
     });
 
     // console.log(newCard);
-    $('.weatherCardContainer').append(newCard);
+    
 }
 
 function getOneCallData(lat, lon){
