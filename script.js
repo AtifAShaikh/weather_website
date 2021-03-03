@@ -67,13 +67,14 @@ function getDataForCards(q, indexToPass){
         if(test === "404"){
 
         } else {
-            console.log(indexToPass);
+            // console.log(indexToPass);
             createCard(data, indexToPass);
         }
     });
 }
 
 function createCard(dataInput, myIndex){
+    // console.log(dataInput);
     var myI = myIndex;
     var newCard = $('#templateCard').clone();
     $(newCard[0]).removeAttr('id');
@@ -82,17 +83,20 @@ function createCard(dataInput, myIndex){
     newCard.find('.tempText').text(Math.round((((dataInput.main.temp-273.15)*1.8)+32)) + " \xB0" + "F");
     newCard.find('.humidText').text('Humidity: ' + dataInput.main.humidity + "%");
     newCard.find('.windText').text("Wind: " + (Math.round(dataInput.wind.speed*2.24)) + " mph");
+    newCard.find('.todaysWeather').attr('src', './WeatherImages/' + dataInput.weather[0].icon + '.png');
 
     fetch('https://api.openweathermap.org/data/2.5/onecall?lat='+dataInput.coord.lat+'&lon='+dataInput.coord.lon+'&exclude=hourly,minutely,alerts&appid=891f7c5d1e00dfea698d456d630ff966')
     .then(function(response){
         return response.json();
     }).then(function(data){
+        console.log(data);
         newCard.find('.UVText').text('UVI: ' + data.current.uvi);
         var currentDay = new Date();
         for(var i = 1; i<6; i++){
             currentDay.setTime(data.daily[i].dt * 1000);
             newCard.find('.day' + i).find('h6').text(days[currentDay.getDay()]);
             newCard.find('.day' + i).find('h5').text(Math.round((((data.daily[i].temp.day-273.15)*1.8)+32)) + " \xB0" + "F");
+            newCard.find('.day'+ i).find('img').attr('src', './WeatherImages/' + data.daily[i].weather[0].icon + '.png');
         }
         myCards[myI] = newCard;
         appendCards(myCards);
@@ -100,7 +104,7 @@ function createCard(dataInput, myIndex){
 }
 
 function appendCards(cardsToAppend){
-    console.log(cardsToAppend);
+    // console.log(cardsToAppend);
     $('.weatherCardContainer').empty();
     cardsToAppend.forEach(element => {
         $('.weatherCardContainer').append(element);
